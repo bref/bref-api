@@ -12,11 +12,19 @@
 
 #include <utility>
 
+/* MSVC DLL import/export. */
+#ifdef _MSC_VER
+# define SHARED_LIBRARY_EXPORT __declspec(dllexport)
+#else
+# define SHARED_LIBRARY_EXPORT
+#endif
+
 const std::string ModHello::Name           = "mod_hello";
 const std::string ModHello::Description    = "Retourne un body avec \"Hello world\".";
 const float       ModHello::ModulePriority = 0.f; // Low priority
 
-extern "C" bref::IModule *loadModule(bref::ILogger *logger)
+extern "C" SHARED_LIBRARY_EXPORT
+bref::IModule *loadModule(bref::ILogger *logger)
 {
   LOG_INFO(logger) << "Load module \"" << ModHello::Name << "\"";
   return new ModHello();
