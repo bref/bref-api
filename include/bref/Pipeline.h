@@ -511,6 +511,14 @@ struct Pipeline
      * \brief Virtual destructor
      */
     virtual ~IContentRequestHandler() {};
+
+    /**
+     * \brief Dispose of the resources allocated by the request handler.
+     *
+     * \note This is often represented by a simple:
+     *       \code delete this; \endcode
+     */
+    virtual void dispose() = 0;
   };
 
   /**
