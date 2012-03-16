@@ -1,0 +1,649 @@
+// ----------8< -----------*- C++ -*-------- 8< --------------------------
+// This header file:
+// - include itset,
+// - abuse of "Higher Order Macros", (see:
+//   http://journal.stuffwithstuff.com/2012/01/24/higher-order-macros-in-c)
+// - use some meta-programmation,
+// - and was a great fun to code!
+// ----------8< ---------------------------- 8< --------------------------
+
+// This file include itself in order to avoid code duplication
+// (between Function with a pointer to class, and Function without)
+#ifndef FUNCTION_SECOND_PASS
+
+/// Just to skip a macro argument, because an empty argument is not
+/// allowed for macros prior to C99 and C++0x(11).
+# define FUNCTION_SKIP_HELPER(x)
+
+/// Helper, apply the same macro to all arguments.
+# define FUNCTION_ALL_ARGUMENTS(x) FUNCTION_ARGUMENTS(x, x, x)
+
+/// Apply code only to the first argument.
+# define FUNCTION_CAR_ARGUMENT(a)                                       \
+  FUNCTION_ARGUMENTS(a, FUNCTION_SKIP_HELPER, FUNCTION_SKIP_HELPER)
+
+/// Apply code to all except the first argument.
+# define FUNCTION_CDR_ARGUMENTS(a)                      \
+  FUNCTION_ARGUMENTS(FUNCTION_SKIP_HELPER, a, a)
+
+/// Apply code only to the second argument.
+# define FUNCTION_CADR_ARGUMENT(a)                                      \
+  FUNCTION_ARGUMENTS(FUNCTION_SKIP_HELPER, a, FUNCTION_SKIP_HELPER)
+
+/// Apply code to all except the first and second argument.
+# define FUNCTION_CDDR_ARGUMENTS(a)                                     \
+  FUNCTION_ARGUMENTS(FUNCTION_SKIP_HELPER, FUNCTION_SKIP_HELPER, a)
+
+/// Helper macro for FUNCTION_HAS_ARGUMENTS
+# define FUNCTION_HAS_ARGUMENTS_HELPER(x) 1
+/// Can be used to check if FUNCTION_ARGUMENTS is empty.
+# define FUNCTION_HAS_ARGUMENTS FUNCTION_CAR_ARGUMENT(FUNCTION_HAS_ARGUMENTS_HELPER)+0
+
+// T1
+# define FUNCTION_CAR_TYPE                              \
+  FUNCTION_CAR_ARGUMENT(FUNCTION_TYPE_GENERATOR)
+# define FUNCTION_TYPE_GENERATOR(x) T##x
+
+/// T1, T2
+# define FUNCTION_TYPE_LIST                                     \
+  FUNCTION_CAR_TYPE                                             \
+  FUNCTION_CDR_ARGUMENTS(FUNCTION_TYPE_GENERATOR_WITH_COMMA)
+# define FUNCTION_TYPE_GENERATOR_WITH_COMMA(x) , FUNCTION_TYPE_GENERATOR(x)
+
+// t1
+# define FUNCTION_CAR_PARAMETER                         \
+  FUNCTION_CAR_ARGUMENT(FUNCTION_PARAMETER_GENERATOR)
+# define FUNCTION_PARAMETER_GENERATOR(x) t##x
+
+/// t1, t2
+# define FUNCTION_FN_CALL_LIST                                          \
+  FUNCTION_CAR_ARGUMENT(FUNCTION_PARAMETER_GENERATOR)                   \
+  FUNCTION_CDR_ARGUMENTS(FUNCTION_PARAMETER_GENERATOR_WITH_COMMA)
+# define FUNCTION_PARAMETER_GENERATOR_WITH_COMMA(x) , FUNCTION_PARAMETER_GENERATOR(x)
+
+/// t2, t3
+# define FUNCTION_MEM_FN_CALL_LIST                                      \
+  FUNCTION_CADR_ARGUMENT(FUNCTION_PARAMETER_GENERATOR)                  \
+  FUNCTION_CDDR_ARGUMENTS(FUNCTION_PARAMETER_GENERATOR_WITH_COMMA)
+
+/// T1 t1, T2 t2
+# define FUNCTION_FN_PARAMETER_LIST                                     \
+  FUNCTION_CAR_ARGUMENT(FUNCTION_FN_PARAMETER_GENERATOR)                \
+  FUNCTION_CDR_ARGUMENTS(FUNCTION_FN_PARAMETER_GENERATOR_WITH_COMMA)
+# define FUNCTION_FN_PARAMETER_GENERATOR(x)                      \
+  FUNCTION_TYPE_GENERATOR(x) FUNCTION_PARAMETER_GENERATOR(x)
+# define FUNCTION_FN_PARAMETER_GENERATOR_WITH_COMMA(x) , FUNCTION_FN_PARAMETER_GENERATOR(x)
+
+/// T2 t2, T3 t3
+# define FUNCTION_MEM_FN_PARAMETER_LIST                                 \
+  FUNCTION_CADR_ARGUMENT(FUNCTION_FN_PARAMETER_GENERATOR)               \
+  FUNCTION_CDDR_ARGUMENTS(FUNCTION_FN_PARAMETER_GENERATOR_WITH_COMMA)
+
+/// , typename T1 , typename T2
+# define FUNCTION_TYPENAME_LIST FUNCTION_ALL_ARGUMENTS(FUNCTION_TYPENAME_GENERATOR)
+# define FUNCTION_TYPENAME_GENERATOR(x) , typename FUNCTION_TYPE_GENERATOR(x)
+
+# if FUNCTION_HAS_ARGUMENTS
+#  define FUNCTION_OPTIONAL_COMMA ,
+# else  // FUNCTION_HAS_ARGUMENTS
+#  define FUNCTION_OPTIONAL_COMMA
+# endif  // FUNCTION_HAS_ARGUMENTS
+
+#endif // ! FUNCTION_SECOND_PASS
+
+#if defined(FUNCTION_SECOND_PASS) || FUNCTION_HAS_ARGUMENTS
+/**
+ * Special Function class for the case when the first argument is
+ * pointer to class. In this case the Function class has the ability
+ * to call pointers to member function for example.
+ */
+template <typename R FUNCTION_TYPENAME_LIST>
+/**
+ * Function type R (T1, T2, ..., TN),
+ * 0 <= N <= implementation-defined maximum (see Annex B).
+ */
+class Function<R (FUNCTION_TYPE_LIST) FUNCTION_OPTIONAL_COMMA
+#ifndef FUNCTION_SECOND_PASS
+               typename mp::enable_if<mp::IsClassPtr<FUNCTION_CAR_TYPE>::value>::type
+# else  // Second pass, process non class pointer function
+# if FUNCTION_HAS_ARGUMENTS // skip the case: R ()
+               typename mp::disable_if<mp::IsClassPtr<FUNCTION_CAR_TYPE>::value>::type
+# endif  // ! FUNCTION_HAS_ARGUMENTS
+#endif  // ! FUNCTION_SECOND_PASS
+               >
+/**
+ * TODO: (maybe)
+ * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#function
+ * : public unary_function<R, T1>      // iff N == 1
+ * : public binary_function<R, T1, T2> // iff N == 2
+ */
+{
+  /**
+   * Types
+   */
+  /// Class of the first parameter
+#ifndef FUNCTION_SECOND_PASS
+  typedef typename mp::RemovePointer<FUNCTION_CAR_TYPE>::type ObjType;
+
+  /// Member function pointer
+  typedef R (ObjType::*mem_fn_ptr_type)(FUNCTION_MEM_FN_PARAMETER_LIST);
+#endif  // ! FUNCTION_SECOND_PASS
+
+  /// Function pointer
+  typedef R (*fn_ptr_type)(FUNCTION_FN_PARAMETER_LIST);
+
+  struct IFunctor
+  {
+    virtual ~IFunctor() { }
+    virtual R operator()(FUNCTION_FN_PARAMETER_LIST) = 0;
+    virtual IFunctor *clone() const = 0;
+  };
+
+  /**
+   * Trait to return the type to be used by the FunctionObject functor
+   * instance, when a ReferenceWrapper is given we use a reference to
+   * the functor instead of a copy.
+   */
+  template <typename T> struct ReferenceWrapperHelper { typedef T type; };
+  template <typename T> struct ReferenceWrapperHelper<ReferenceWrapper<T> > { typedef T & type; };
+
+  template <typename T>
+  class FunctionObject : public IFunctor
+  {
+    typename ReferenceWrapperHelper<T>::type functor_;
+
+  public:
+    FunctionObject(const T & t)
+      : functor_(t)
+    { }
+
+    FunctionObject(T & t)
+      : functor_(t)
+    { }
+
+    FunctionObject(const ReferenceWrapper<T> & t)
+      : functor_(t.get())
+    { }
+
+    FunctionObject(const FunctionObject & other)
+      : functor_(other.functor_)
+    { }
+
+    R operator()(FUNCTION_FN_PARAMETER_LIST)
+    {
+      return functor_(FUNCTION_FN_CALL_LIST);
+    }
+
+    IFunctor *clone() const
+    {
+      return new FunctionObject(*this);
+    }
+  };
+
+  template <typename T>
+  class BoundedPointerFunction : public IFunctor
+  {
+    typedef R (T::*mem_fun_ptr_type)(FUNCTION_FN_PARAMETER_LIST);
+
+    T                *instance_;
+    mem_fun_ptr_type  pmf_;
+
+  public:
+    BoundedPointerFunction(T *instance, mem_fun_ptr_type pmf)
+      : instance_(instance), pmf_(pmf)
+    { }
+
+    BoundedPointerFunction(const BoundedPointerFunction & other)
+      : instance_(other.instance_), pmf_(other.pmf_)
+    { }
+
+    R operator()(FUNCTION_FN_PARAMETER_LIST)
+    {
+      return (instance_->*pmf_)(FUNCTION_FN_CALL_LIST);
+    }
+
+    IFunctor *clone() const
+    {
+      return new BoundedPointerFunction(*this);
+    }
+  };
+
+  /**
+   * Specialisation for const member function.
+   */
+  template <typename T>
+  class BoundedPointerFunction<const T> : public IFunctor
+  {
+    typedef R (T::*mem_fun_ptr_type)(FUNCTION_FN_PARAMETER_LIST) const;
+
+    const T          *instance_;
+    mem_fun_ptr_type  pmf_;
+
+  public:
+    BoundedPointerFunction(const T *instance, mem_fun_ptr_type pmf)
+      : instance_(instance), pmf_(pmf)
+    { }
+
+    BoundedPointerFunction(const BoundedPointerFunction & other)
+      : instance_(other.instance_), pmf_(other.pmf_)
+    { }
+
+    R operator()(FUNCTION_FN_PARAMETER_LIST)
+    {
+      return (instance_->*pmf_)(FUNCTION_FN_CALL_LIST);
+    }
+
+    IFunctor *clone() const
+    {
+      return new BoundedPointerFunction(*this);
+    }
+  };
+
+  /// Union of different callable types.
+  union Callable
+  {
+    fn_ptr_type      fn_ptr;
+    IFunctor        *ifunctor_ptr;
+
+
+#ifndef FUNCTION_SECOND_PASS
+    mem_fn_ptr_type  mem_fn_ptr;
+#endif  // ! FUNCTION_SECOND_PASS
+
+    // Constructors
+    Callable() { }
+    Callable(const fn_ptr_type & p)     : fn_ptr(p)       { }
+    Callable(IFunctor * p)              : ifunctor_ptr(p) { }
+
+#ifndef FUNCTION_SECOND_PASS
+    Callable(const mem_fn_ptr_type & p) : mem_fn_ptr(p)   { }
+#endif  // ! FUNCTION_SECOND_PASS
+  };
+
+  /**
+   * Callers
+   */
+  static R callFn(const Callable & callable FUNCTION_OPTIONAL_COMMA FUNCTION_FN_PARAMETER_LIST)
+  {
+    return callable.fn_ptr(FUNCTION_FN_CALL_LIST);
+  }
+
+#ifndef FUNCTION_SECOND_PASS
+  /**
+   * The first argument is a pointer to class, then the member
+   * function called with the remaining arguments.
+   */
+  static R callMemFn(const Callable & callable FUNCTION_OPTIONAL_COMMA FUNCTION_FN_PARAMETER_LIST)
+  {
+    return ((FUNCTION_CAR_PARAMETER)->*callable.mem_fn_ptr)(FUNCTION_MEM_FN_CALL_LIST);
+  }
+#endif  // ! FUNCTION_SECOND_PASS
+
+  /**
+   * Call an IFunctor pointer.
+   */
+  static R callFunctor(const Callable & callable FUNCTION_OPTIONAL_COMMA FUNCTION_FN_PARAMETER_LIST)
+  {
+    return (*callable.ifunctor_ptr)(FUNCTION_FN_CALL_LIST);
+  }
+
+  // Type of static callers function
+  typedef R (*caller_type)(const Callable & FUNCTION_OPTIONAL_COMMA FUNCTION_FN_PARAMETER_LIST);
+
+  /**
+   * Member variables
+   */
+  caller_type caller_;
+  Callable    callable_;
+
+public:
+  /**
+   * Type of the result-type as specified by 20.3.10 third point.
+   * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#function
+   */
+  typedef R result_type;
+
+  /**
+   * 20.3.10.1 function construct/copy/destroy
+   *
+   * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#construct_copy_destroy
+   */
+
+  /**
+   * Postconditions:
+   *    this->empty().
+   */
+  explicit Function()
+    : caller_(0), callable_()
+  { }
+
+  /**
+   * Postconditions:
+   *    this->empty()if f.empty(); otherwise, *this targets a copy of
+   *    this->f.
+   *
+   * Throws:
+   *    will not throw if the target of f is a function pointer or a
+   *    function object passed via ReferenceWrapper. Otherwise, may
+   *    throw bad_alloc or any exception thrown by the copy
+   *    constructor of the stored function object.
+   */
+  Function(const Function & f)
+    : caller_(f.caller_), callable_(f.callable_)
+  {
+    if (caller_ == callFunctor) {
+      callable_.ifunctor_ptr = f.callable_.ifunctor_ptr->clone();
+    }
+  }
+
+  /**
+   * Requires:
+   *    f is a callable function object for argument types T1, T2,
+   *    ..., TN and return type R.
+   *
+   * Postconditions:
+   *    this->empty() if any of the following hold:
+   *    - f is a NULL function pointer.
+   *    - f is a NULL member function pointer.
+   *    - f is an instance of the function class template and f.empty()
+   *    - Otherwise, *this targets a copy of f if f is not a pointer
+   *      to member function, and targets a copy of mem_fun(f) if f is
+   *      a pointer to member function.
+   *
+   * Throws:
+   *    will not throw when f is a function pointer. Otherwise, may
+   *    throw bad_alloc or any exception thrown by F's copy
+   *    constructor.
+   *
+   * Note:
+   *    The prototype with a reference wrapper is handled here,
+   *    because the reference wrapper type is handled in the
+   *    FunctionObject template classe. The documentation of this
+   *    prototype follow this prototype.
+   *
+   * Prototype:
+   *    template<typename F> Function(ReferenceWrapper<F> f);
+   *
+   * Requires:
+   *    f.get() is a callable function object for argument types T1,
+   *    T2, ..., TN and return type R.
+   *
+   * Postconditions:
+   *    !this->empty() and *this targets f.get().
+   *
+   * Throws:
+   *    will not throw.
+   *
+   * Rationale:
+   *    a potential alternative would be to replace the
+   *    ReferenceWrapper argument with an argument taking a function
+   *    object pointer. This route was not taken because
+   *    ReferenceWrapper is a general solution stating the user's
+   *    intention to pass a reference to an object instead of a copy.
+   */
+  template<typename F>
+  Function(const F & f)
+    : caller_(callFunctor), callable_(new FunctionObject<F>(f))
+  { }
+
+  Function(fn_ptr_type fnPtr)
+    : caller_(fnPtr ? callFn : 0), callable_(fnPtr)
+  { }
+
+#ifndef FUNCTION_SECOND_PASS
+  Function(mem_fn_ptr_type memFnPtr)
+    : caller_(memFnPtr ? callMemFn : 0), callable_(memFnPtr)
+  { }
+#endif  // ! FUNCTION_SECOND_PASS
+
+  /**
+   * Effects:
+   *    Function(f).swap(*this);
+   *
+   * Returns:
+   *    *this
+   */
+  Function & operator=(const Function & f)
+  {
+    Function(f).swap(*this);
+    return *this;
+  }
+
+  /**
+   * Effects:
+   *       function(f).swap(*this);
+   *
+   * Returns:
+   *       *this
+   */
+  template<typename F> Function & operator=(F f)
+  {
+    Function(f).swap(*this);
+    return *this;
+  }
+
+  /**
+   * Effects:
+   *    function(f).swap(*this);
+   *
+   * Returns:
+   *    *this
+   *
+   * Throws:
+   *    will not throw.
+   */
+  template<typename F> Function & operator=(ReferenceWrapper<F> f)
+  {
+    Function(f).swap(*this);
+    return *this;
+  }
+
+  /**
+   * Effects:
+   *    if !this->empty(), destroys the target of this.
+   */
+  ~Function()
+  {
+    if (caller_ == &callFunctor) {
+      delete callable_.ifunctor_ptr;
+    }
+  }
+
+
+  /**
+   * 20.3.10.2 function modifiers
+   * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#modifiers
+   */
+
+  /**
+   * Effects:
+   *    interchanges the targets of *this and other and the allocators of *this and other.
+   *
+   * Throws:
+   *    will not throw.
+   */
+  void swap(Function & other)
+  {
+    if (&other != this)
+      {
+        // temp value
+        Callable    callable = other.callable_;
+        caller_type caller   = other.caller_;
+
+        // set other
+        other.callable_      = callable_;
+        other.caller_        = caller_;
+
+        // set self
+        callable_            = callable;
+        caller_              = caller;
+      }
+  }
+
+  /**
+   * Effects:
+   *    If !this->empty(), deallocates current target.
+   * Postconditions:
+   *    this->empty().
+   */
+  void clear()
+  {
+    caller_ = 0;
+    if (caller_ == callFunctor) {
+      delete callable_.ifunctor_ptr;
+    }
+  }
+
+  /**
+   * 20.3.10.3 function capacity
+   * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#capacity
+   */
+
+  /**
+   * Returns:
+   *    true if the function object has a target, false otherwise.
+   *
+   * Throws:
+   *    will not throw.
+   */
+  bool empty() const
+  {
+    return caller_ != 0;
+  }
+
+  /**
+   * Returns:
+   *    if !this->empty(), returns a value that will evaluate true in
+   *    a boolean context; otherwise, returns a value that will
+   *    evaluate false in a boolean context. The value type returned
+   *    shall not be convertible to int.
+   *
+   * Throws:
+   *    will not throw.
+   *
+   * Notes:
+   *    This conversion can be used in contexts where a bool is
+   *    expected (e.g., an if condition); however, implicit
+   *    conversions (e.g., to int) that can occur with bool are not
+   *    allowed, eliminating some sources of user error. The suggested
+   *    implementation technique is to use a member function pointer
+   *    whose class type is private to the function instantiation.
+   */
+  operator caller_type() const
+  {
+    return caller_;
+  }
+
+  /**
+   * 20.3.10.4 function invocation
+   * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html#invocation_section
+   */
+
+  /**
+   * Effects:
+   *    f(t1, t2, ..., tN), where f is the target of *this.
+   *
+   * Returns:
+   *    nothing, if R is void; otherwise, the return value of the call
+   *    to f.
+   *
+   * Throws:
+   *    BadFunctionCallException if this->empty(); otherwise, any
+   *    exception thrown by the wrapped function object.
+   */
+  R operator()(FUNCTION_FN_PARAMETER_LIST) const
+  {
+    if (! caller_) {
+      throw BadFunctionCallException();
+    }
+    return caller_(callable_ FUNCTION_OPTIONAL_COMMA FUNCTION_FN_CALL_LIST);
+  }
+
+
+  /**
+   * Extensions to be able to use bounded pointer (a member function
+   * pointer linked to an instance).
+   *
+   * Note:
+   *    The type of the member function pointer class (U) is used to
+   *    represent the type of the instance in the
+   *    BoudedPointerFunction, in order to allow derived class to be
+   *    used "transparently".
+   */
+
+  /**
+   * see bind() below.
+   */
+  template<typename T, typename U>
+  Function(T *instance, R (U::*pmf)(FUNCTION_FN_PARAMETER_LIST))
+    : caller_(callFunctor), callable_(new BoundedPointerFunction<U>(instance, pmf))
+  { }
+
+  /**
+   * Bind a member function pointer to an instance. The member
+   * function should get the same parameters used by this template
+   * specialisation.
+   */
+  template <typename T, typename U>
+  void bind(T *instance, R (U::*pmf)(FUNCTION_FN_PARAMETER_LIST))
+  {
+    Function(instance, pmf).swap(*this);
+  }
+
+  template<typename T, typename U>
+  Function(const T *instance, R (U::*pmf)(FUNCTION_FN_PARAMETER_LIST) const)
+    : caller_(callFunctor), callable_(new BoundedPointerFunction<const U>(instance, pmf))
+  { }
+
+  /**
+   * Bind a member function pointer to an instance. The member
+   * function should get the same parameters used by this template
+   * specialisation.
+   */
+  template<typename T, typename U>
+  void bind(const T *instance, R (U::*pmf)(FUNCTION_FN_PARAMETER_LIST) const)
+  {
+    Function(instance, pmf).swap(*this);
+  }
+};                 // ! Function with a pointer-to-class as first type
+
+#endif  // defined(FUNCTION_SECOND_PASS) || FUNCTION_HAS_ARGUMENTS
+
+
+#ifndef FUNCTION_SECOND_PASS
+# define FUNCTION_SECOND_PASS
+# include "Function.def"
+# undef FUNCTION_SECOND_PASS
+#endif
+
+#ifndef FUNCTION_SECOND_PASS
+
+// Forget about all the macros/defines
+# undef FUNCTION_ALL_ARGUMENTS
+# undef FUNCTION_ARGUMENTS
+# undef FUNCTION_CADR_ARGUMENT
+# undef FUNCTION_CAR_ARGUMENT
+# undef FUNCTION_CAR_PARAMETER
+# undef FUNCTION_CAR_TYPE
+# undef FUNCTION_CDDR_ARGUMENTS
+# undef FUNCTION_CDR_ARGUMENTS
+# undef FUNCTION_FN_CALL_LIST
+# undef FUNCTION_FN_PARAMETER_GENERATOR
+# undef FUNCTION_FN_PARAMETER_GENERATOR_WITH_COMMA
+# undef FUNCTION_FN_PARAMETER_LIST
+# undef FUNCTION_HAS_ARGUMENTS
+# undef FUNCTION_HAS_ARGUMENTS_HELPER
+# undef FUNCTION_MEM_FN_CALL_LIST
+# undef FUNCTION_MEM_FN_PARAMETER_LIST
+# undef FUNCTION_OPTIONAL_COMMA
+# undef FUNCTION_PARAMETER_GENERATOR
+# undef FUNCTION_PARAMETER_GENERATOR_WITH_COMMA
+# undef FUNCTION_SKIP_HELPER
+# undef FUNCTION_TYPENAME_GENERATOR
+# undef FUNCTION_TYPENAME_LIST
+# undef FUNCTION_TYPENAME_LIST
+# undef FUNCTION_TYPE_GENERATOR
+# undef FUNCTION_TYPE_GENERATOR_WITH_COMMA
+# undef FUNCTION_TYPE_LIST
+
+#endif // ! FUNCTION_SECOND_PASS
