@@ -25,7 +25,7 @@
  *
  * Example:
 \code
-LOG(logger, ILogger::DEBUG) << "new connection from " << host;
+LOG(logger, bref::ILogger::Debug) << "new connection from " << host;
 \endcode
  *
  * \sa LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL

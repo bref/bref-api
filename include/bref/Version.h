@@ -14,7 +14,7 @@
 namespace bref {
 
 /**
- * \brief Describe a version with a minor and a major numner.
+ * \brief Describe a version with a minor and a major number.
  */
 struct Version
 {

@@ -15,7 +15,7 @@
 
 #include "detail/util/NonCopyable.hpp"
 #include "BrefValue.h"
-#include "HttpHeader.h"
+#include "HttpRequest.h"
 
 namespace bref {
 
