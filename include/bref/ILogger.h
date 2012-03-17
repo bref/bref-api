@@ -64,8 +64,8 @@ public:
    * \brief Log a message with a given severity.
    *
    * \note
-   * The message is logged only if \p severity is inferior to
-   * severity().
+   * The message is logged only if \p severity (the message severity) 
+   * is superior or equal to severity() (the logger severity).
    *
    * \param severity
    *    The severity of the message.

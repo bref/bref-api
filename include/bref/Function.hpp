@@ -16,7 +16,7 @@
  *
  * \brief Polymorphic Function Object Wrapper.
  *
- * The Function class is a tentative to implement the following
+ * The Function class is a personal challenge to implement the following
  * proposal to add a Polymorphic Function Object Wrapper to the C++
  * Standard Library. It's based on the Boost.Function library and have
  * the added functionnality of bounded pointer-to-member function.

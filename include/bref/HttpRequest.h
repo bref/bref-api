@@ -22,7 +22,7 @@ namespace bref {
 /**
  * \brief HTTP request container
  *
- * Contains a HTTP request using HttpHeader and body
+ * Contains a HTTP request using HttpHeader
  *
  * \sa HttpResponse
  */
