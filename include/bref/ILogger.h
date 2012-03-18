@@ -11,6 +11,8 @@
 #ifndef BREF_API_ILOGGER_H
 #define BREF_API_ILOGGER_H
 
+#include <string>
+
 namespace bref {
 
 /**
