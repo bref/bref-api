@@ -27,10 +27,10 @@ namespace bref
  *
  * \code extern "C" bref::IModule *loadModule(bref::ILogger *); \endcode
  *
- * After the module has been loaded, a version check should be
- * performed as follows : If the major numbers of the API version and
- * of the minimum API version supported by the module do not match,
- * the module is not used. If the major numbers match, but the minor
+ * once the module is loaded, a version check should be
+ * performed as follows : If the major number of the API doesn't match with the major 
+ * number of the minimum Api version supported by the module.
+ * The module is not used. If the major numbers match, but the minor
  * numbers do not, the module is used but a warning is emitted.
  */
 class IModule
