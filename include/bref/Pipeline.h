@@ -29,53 +29,55 @@ namespace bref {
 /**
  * \defgroup Pipeline Pipeline
  *
- * \brief The pipeline contain all the hooks points available for the
+ * \brief The pipeline contains all the hooks points available for the
  *        bref API.
  *
  * When a module is initialized by the method
- * \c IModule#registerHooks(Pipeline &) it initialize it's hook points in
- * the Pipeline.
+ * \c IModule#registerHooks(Pipeline &) it initializes its hook points
+ * in the Pipeline.
  *
- * This page describe how the Pipeline class and how it interact with
- * the different hook points.
+ * This page describes how the Pipeline class works and how it interacts
+ * with the different hook points.
  *
  * Vocabulary:
  * - \e Hook:
  *
  *   Hooks are RequestHandlers (see below) generators for a given set
- *   of arguments. If -- given the argument it received -- a hook
- *   decide to not handle a request a null handler is generated.
+ *   of arguments. If -- given the argument(s) it received -- a hook
+ *   decides not to handle a request, a null handler is generated.
  *
  *   Examples of hooks are: Pipeline::PostParsingHook,
  *   Pipeline::OnReceiveHook, ...
  *
- *   In term of codes, a hook is a Function object that return another
- *   Function object. It's often constructed by an Environment and an
+ *   In term of code, a hook is a Function object that returns another
+ *   Function object. It's often constructed with an Environment and an
  *   HttpRequest.
  *
  * - \e RequestHandler:
  *
- *   A request handler (i.e: Pipeline::ConnectionRequestHandler,
- *   Pipeline::OnReceiveRequestHandler) is the handler that handle.
+ *   A request handler (e.g: Pipeline::ConnectionRequestHandler,
+ *   Pipeline::OnReceiveRequestHandler) is the function object, returned
+ *   by the hook, that will handle a request. It should be called with
+ *   the arguments provided by its corresponding hook point
+ *   (e.g.: the Pipeline::ConnectionRequestHandler takes an HttpResponse
+ *   and an IpAddress).
  *
- *   It's the function object returned by the hook that will handle a
- *   request. It should be called with the arguments provided by this
- *   hook point (i.e: the Pipeline::ConnectionRequestHandler take a
- *   HttpResponse to fill and an IpAddress).
- *
- *   The majority of the request handler take an HttpResponse as
- *   reference, they can fill it's header and body. When a response is
- *   finished the upstream or bridge elements of the pipeline will
- *   directly go to the downstream part.
+ *   The majority of the request handlers takes an HttpResponse as
+ *   reference, they can fill its header. When a response is finished,
+ *   the upstream or bridge elements of the pipeline will directly go
+ *   to the downstream part.
  *
  * - \e Priority
  *
- *   Use to represent the priority of one request handler on another,
- *   when placed on the same hook point. A request handler with higher
- *   priority will be used over one with a lower's priority.
+ *   Used to represent the precedence of one request handler over
+ *   another, when placed on the same hook point.
+ *   Depending on the hook point, either all the request handlers will be
+ *   called, starting with the highest priority, or only the most important
+ *   one will be called.
  *
- *   The priority is a floating number. Modules should try to follow
- *   the following convention (but value can be adapted):
+ *   The priority is a floating number between 0.0 and 1.0.
+ *   Modules should try to follow the following convention (but the value
+ *   can be adapted):
  *   - Low Priority:    0.0
  *   - Normal Priority: 0.5
  *   - High Priority:   1.0
@@ -83,14 +85,14 @@ namespace bref {
  * Example for a CGI module:
  *
  * 1. Register a Pipeline::ContentHook with a high priority (1.0)
- *    that return a valid Pipeline::ContentRequestHandler when it detect a
- *    request asking a PHP file (by checking the .php extension for example
- *    and some configuration variables), otherwise it should return an
- *    empty handler.
+ *    that returns a valid Pipeline::ContentRequestHandler if it detects
+ *    a request asking a PHP file (by checking the .php extension for
+ *    example and some configuration variables), otherwise it should
+ *    return an empty handler.
  *
- * 2. Create the Pipeline::ContentRequestHandler that create a
- *    process when it's constructed, and have a function operator()
- *    that take each chunk of the request body and send them to the
+ * 2. Create the Pipeline::ContentRequestHandler that creates a
+ *    process when it's constructed, and has a function operator()
+ *    that takes each chunk of the request body and send them to the
  *    CGI process, and fill a buffer in return.
  *
  * @{
@@ -116,9 +118,9 @@ typedef BrefValue ServerConfig;
 #endif
 
 /**
- * \brief This structure define the environment of a request.
+ * \brief This structure defines the environment of a request.
  *
- * The environment of a request is currently a logger and the server
+ * The environment of a request contains a logger and the server
  * configuration.
  *
  * We choose to do this because an implementation is free to handle
@@ -152,9 +154,9 @@ struct Pipeline
    * \defgroup Gate Gate
    * \ingroup Pipeline
    *
-   * \brief Connections, received and send events handling.
+   * \brief Connections, data reception and sending events handling.
    *
-   * The gate handle the communication with the outside world. Network
+   * The gate handles the communication with the outside world. Network
    * events like:
    *
    * - a connection
@@ -169,10 +171,10 @@ struct Pipeline
    * \brief A hook for the connection of a client.
    *
    * \param[out] response
-   *          Can be filled with the content of the response and a
+   *          Can be filled with the header of the response and a
    *          status code.
-   * \param environment
-   *            The environment of the request.
+   * \param[in] environment
+   *          The environment of the request.
    *
    * \retval true
    *    If the connection is accepted.
@@ -188,13 +190,13 @@ struct Pipeline
   /**
    * \brief Generate a Pipeline::ConnectionRequestHandler.
    *
-   * \param environment
+   * \param[in] environment
    *            The environment of the request.
    *
    * \return An empty Pipeline::ConnectionRequestHandler when the
-   *         module has nothing to do for the request, otherwise a
-   *         valid handler that will be called to handle the
-   *         connection of a client.
+   *         module can not process the request, otherwise a
+   *         valid handler that will be called upon connection
+   *         of a client.
    *
    * \sa connectionHooks, ConnectionRequestHandler
    */
@@ -203,8 +205,8 @@ struct Pipeline
   /**
    * \brief List of connection hooks.
    *
-   * Connection hooks should be called by the ZIA server when it
-   * received the connection of a client.
+   * Connection hooks should be called by the ZIA server upon
+   * the connection of a client.
    *
    * This hook point can be used for a black listing module for
    * example.
@@ -221,14 +223,14 @@ struct Pipeline
    * "read event" on the fd, with a function like \c select().
    *
    * \param[in] socket
-   *            The socket where data need to be read.
+   *            The socket with data available.
    * \param[out] buffer
    *            The buffer where data will be stored.
    *
    * \retval true
-   *    If everything went fine the server can pursue the request.
+   *    If everything went fine, the server can pursue the request.
    * \retval false
-   *    When an unrecoverable error happen, the server will take care
+   *    When an unrecoverable error happens, the server will take care
    *    to remove the socket.
    *
    * \sa onReceiveHooks, OnReceiveHook
@@ -239,11 +241,12 @@ struct Pipeline
   /**
    * \brief Generate a Pipeline::OnReceiveRequestHandler.
    *
-   * \param environment
+   * \param[in] environment
+   *            The environment of the request.
    *
-   * \return An empty handler when the module has nothing to do for the
-   *         request, otherwise a valid handler that will be called to
-   *         handle the reception of data.
+   * \return An empty handler when the module can not process the
+   *         request, otherwise a valid handler that will be called upon
+   *         reception of data.
    *
    * \sa onReceiveHooks, OnReceiveRequestHandler
    */
@@ -284,12 +287,12 @@ struct Pipeline
   /**
    * \brief Generate a Pipeline::OnSendRequestHandler.
    *
-   * \param environment
+   * \param[in] environment
+   *            The environment of the request.
    *
    * \return An empty Pipeline::OnSendRequestHandler when the
-   *         module has nothing to do for the request, otherwise a
-   *         valid handler that will be called to handle the
-   *         connection of a client.
+   *         module can not process the request, otherwise a
+   *         valid handler that will be called when sending data.
    *
    * \sa onSendHooks, OnSendRequestHandler
    */
@@ -298,8 +301,8 @@ struct Pipeline
   /**
    * \brief List of hooks to run when data needs to be sent.
    *
-   * The server should call this hook at the en of the Pipeline, when
-   * a response should be written to the client.
+   * The server should call these hooks at the end of the Pipeline, when
+   * a response should be sent to the client.
    *
    * \sa OnSendRequestHandler, onSendHook
    */
@@ -311,45 +314,47 @@ struct Pipeline
    * \defgroup Upstream Upstream
    * \ingroup Pipeline
    *
-   * \brief Represent the pre-processing of a request.
+   * \brief Represents the pre-processing of a request.
    *
-   * The upstream handle each stage of a request before the
-   * \ref Bridge "Bridge". This section handle the parsing of the
-   * request and a few hooks before and after the parsing step.
+   * The upstream handles each stage of a request before the
+   * \ref Bridge "Bridge". It performs the parsing of the request
+   * and provides a few hooks before and after this step.
    *
    * @{
    */
 
   /**
-   * \brief A hook called after something was read on the socket.
+   * \brief A hook called upon reading data on the socket.
    *
-   * This hook is able to transform the data received by the socket
-   * and transform before they are sent to the parser.
+   * This hook is able to transform data received by the socket
+   * before it is sent to the parser.
    *
-   * \param response
-   *            Can be filled with the content of the response and a
+   * \param[out] response
+   *            Can be filled with the header of the response and a
    *            status code.
    * \param[in] inBuffer
-   *            The buffer of raw datas, received on the socket.
+   *            The buffer containing the data received on the socket.
    * \param[out] outBuffer
-   *            The content of the buffer to send to the parser.
+   *            The buffer containing the data to send to the parser.
    *
-   * \sa postReadHooks, PostReadHook
+   * \sa postReceiveHooks, PostReceiveHook
    */
   typedef Function<void (HttpResponse & response,
                          const Buffer & inBuffer,
-                         Buffer &       outBuffer)> PostReadRequestHandler;
+                         Buffer &       outBuffer)> PostReceiveRequestHandler;
 
   /**
    * \brief Generate a Pipeline::PostRequestHandler.
    *
-   * \return An empty Pipeline::PostRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   * \param[in] environment
+   *            The environment of the request.
    *
-   * \sa postReadHooks, PostReadRequestHandler
+   * \return An empty Pipeline::PostRequestHandler if the hook can not
+   *         process the request, a valid handler otherwise.
+   *
+   * \sa postReceiveHooks, PostReceiveRequestHandler
    */
-  typedef Function<PostReadRequestHandler (const Environment & environment)> PostReadHook;
+  typedef Function<PostReceiveRequestHandler (const Environment & environment)> PostReceiveHook;
 
   /**
    * \brief List of post-read hooks.
@@ -358,28 +363,28 @@ struct Pipeline
    * Pipeline::OnReceiveRequestHandler handlers have generated some
    * data, and before \c parsingHooks are called.
    *
-   * \sa PostReadHook, PostReadRequestHandler
+   * \sa PostReceiveHook, PostReceiveRequestHandler
    */
-  std::list<std::pair<PostReadHook, float> > postReadHooks;
+  std::list<std::pair<PostReceiveHook, float> > postReceiveHooks;
 
   /**
    * \brief The handler called to generate an HttpRequest.
    *
-   * It parse raw datas from the socket and convert them into a
+   * It parses raw data received on the socket and converts it into a
    * structured HttpRequest.
    *
    * \param[out] response
-   *            Can be filled with the content of the response and a
+   *            Can be filled with the header of the response and a
    *            status code.
    * \param[in] buff
-   *            A chunk of raw datas.
+   *            A chunk of raw data.
    * \param[out] request
    *            The HttpRequest to fill with the content of the request.
    *
    * \return A pointer to the consumed part of the buffer. If the
-   *         parser find the "\r\n\r\n" sequence in the middle of the
+   *         parser finds the "\r\n\r\n" sequence in the middle of the
    *         buffer it will return an iterator to the character after
-   *         the last '\n', otherwise an iterator to the begin of
+   *         the last '\n', otherwise an iterator to the beginning of
    *         buffer should be returned.
    *
    * \retval buff.begin()
@@ -394,9 +399,8 @@ struct Pipeline
   /**
    * \brief Generate a Pipeline::ParsingRequestHandler.
    *
-   * \return An empty Pipeline::ParsingRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   * \return An empty Pipeline::ParsingRequestHandler when the hook
+   *         can not process the request, a valid handler otherwise.
    *
    * \sa parsingHooks, ParsingRequestHandler
    */
@@ -405,23 +409,21 @@ struct Pipeline
   /**
    * \brief List of parsing hooks.
    *
-   * Only one parser should return a valid request handler for a given
-   * request, otherwise the parser with the highest priority will be
-   * choosed.
+   * Only one parser module should return a valid request handler for a
+   * given request. If multiple handlers are provided, the one with the
+   * highest priority will be used.
    *
    * \sa ParsingHook, ParsingRequestHandler
    */
   std::list<std::pair<ParsingHook, float> > parsingHooks;
 
   /**
-   * \brief Handler called after the parsing of a request.
+   * \brief Handler called once the request is parsed.
    *
-   * This hook point can be used for an URL rewrite module for
-   * example.
+   * This hook point can be used for an URL rewrite module for example.
    *
    * \param[out] response
-   *            Can be filled with the content of the response and a
-   *            status code.
+   *            Can be filled with the response header and a status code.
    *
    * \sa postParsingHooks, PostParsingHook
    */
@@ -430,8 +432,13 @@ struct Pipeline
   /**
    * \brief Generate a Pipeline::PostParsingRequestHandler.
    *
-   * \return An empty Pipeline::PostParsingRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
+   * \param[in] environment
+   *            The environment of the request.
+   * \param[out] httpRequest
+   *            The HttpRequest to fill with the request header.
+   *
+   * \return An empty Pipeline::PostParsingRequestHandler if the
+   *         hook can not process the request, otherwise a valid
    *         handler.
    *
    * \sa postParsingHooks, PostParsingRequestHandler
@@ -442,8 +449,7 @@ struct Pipeline
   /**
    * \brief List of post-parsing hooks.
    *
-   * The server should called this hooks after the parsing of a
-   * request.
+   * The server should call these hooks after the parsing step.
    *
    * \sa PostParsingRequestHandler, PostParsingHook
    */
@@ -455,7 +461,7 @@ struct Pipeline
    * \defgroup Bridge Bridge
    * \ingroup Pipeline
    *
-   * \brief Contain hooks to run for the content generation.
+   * \brief Contains hooks to run for content generation.
    *
    * This is where modules like CGI, static pages, directory listing,
    * ... should be plugged.
@@ -466,8 +472,8 @@ struct Pipeline
   /**
    * \brief Handler called to execute a request.
    *
-   * This handler take an optional input from the body of the request
-   * and generate a response body.
+   * This handlers take an optional input from the body of the request
+   * and generates a response body.
    *
    */
   class IContentRequestHandler
@@ -477,14 +483,14 @@ struct Pipeline
      * \brief Callback for request body content
      *
      * \param [out] response
-     *              Where the status code are filled.
+     *              Where the status code is filled.
      * \param [in] inBuffer
-     *             A chunk of the body of the request.
+     *             A chunk of the request body.
      *
      * \retval true
-     *    When the processing is finished.
+     *    If the processing is finished.
      * \retval false
-     *    When the processing is not finished.
+     *    If the processing is not finished.
      *
      * \sa contentHooks, ContentHook
      */
@@ -494,14 +500,14 @@ struct Pipeline
      * \brief Callback for response body content
      *
      * \param [out] response
-     *              Where the status code are filled.
+     *              Where the status code is filled.
      * \param [in] inBuffer
-     *             A chunk of the body of the request.
+     *             A buffer containing the generated content.
      *
      * \retval true
-     *    When the processing is finished.
+     *    If the processing is finished.
      * \retval false
-     *    When the processing is not finished.
+     *    If the processing is not finished.
      *
      * \sa contentHooks, ContentHook
      */
@@ -510,7 +516,7 @@ struct Pipeline
     /**
      * \brief Virtual destructor
      */
-    virtual ~IContentRequestHandler() {};
+    virtual ~IContentRequestHandler() {}
   };
 
   /**
@@ -520,13 +526,12 @@ struct Pipeline
    *              register your fd in its event system (kqueue / epoll / select)
    *              and call back your handle on new activity.
    *
-   * \warning Server has to set a default value (depending the system, for
+   * \warning Server has to set a default value (depending on the system, for
    *          example -1 on UNIX integer, NULL on Windows HANDLE) for fd,
-   *          to detect that hook provides a fd.
+   *          to detect that the hook provides a fd.
    *
-   * \return An empty Pipeline::ContentRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   * \return A 0 pointer if the hook can not process the request, a valid pointer
+   *         to Pipeline::IContentRequestHandler otherwise.
    *
    * \sa contentHooks, ContentRequestHandler
    */
@@ -538,7 +543,7 @@ struct Pipeline
   /**
    * \brief List of content hooks.
    *
-   * Only one content hooks can be used at for a given request, the
+   * Only one content hook can be used for a given request, the
    * content hook with the highest priority should be choosed by the
    * server.
    *
@@ -562,25 +567,13 @@ struct Pipeline
    */
 
   /**
-   * Appelé après la génération de contenu dynamique ou statique,
-   * avec un buffer contenant des "morceaux" du contenu généré.
-   *
-   * \param[in] Buffer
-   *          Les données générées à l'étape précédente de
-   *          génération de contenu.
-   * \param[out] Buffer
-   *          Les données en sortie (peut être identique au buffer
-   *          passé en entrée).
-   */
-
-  /**
    * \brief Hook to run after the content was generated by
    *        \c contentHooks.
    *
    * \param[out] reponse
-   *            Where the status code are filled.
+   *            Where the status code is filled.
    * \param inBuffer
-   *            A chunk of the body of the request.
+   *            A chunk of the request body.
    * \param outBuffer
    *            An chunk of output body.
    *
@@ -593,9 +586,8 @@ struct Pipeline
   /**
    * \brief Generate Pipeline::PostContentRequestHandler.
    *
-   * \return An empty Pipeline::PostContentRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   * \return An empty Pipeline::PostContentRequestHandler if the
+   *         hook can not process the request, a valid handler otherwise.
    *
    * \sa postContentHooks, PostContentRequestHandler
    */
@@ -605,8 +597,8 @@ struct Pipeline
   /**
    * \brief A list of post-content hooks.
    *
-   * This hooks can be chained, but the highest priority will be
-   * called first.
+   * This hooks can be chained, but the one with the highest
+   * priority will be called first.
    *
    * \sa PostContentRequestHandler, PostContentHook
    */
@@ -614,12 +606,12 @@ struct Pipeline
 
 
   /**
-   * \brief Handler to call after the postContentHooks were run.
+   * \brief Handler to call after the postContentHooks are executed.
    *
    * This hook can be used for a compression module for example.
    *
    * \param[out] response
-   *            Where the status code are filled.
+   *            Where the status code is filled.
    * \param[in] inBuffer
    *            A chunk of the body of the request.
    * \param[out] outBuffer
@@ -635,8 +627,8 @@ struct Pipeline
    * \brief Generate Pipeline::TransformRequestHandler.
    *
    * \return An empty Pipeline::TransformRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   *         hook can not process the request, a valid handler
+   *         otherwise.
    *
    * \sa transformHooks, TransformRequestHandler
    */
@@ -646,7 +638,7 @@ struct Pipeline
   /**
    * \brief List of transformation hooks.
    *
-   * Transformation hooks are called handle by order of priority.
+   * Transformation hooks are called handle in descending order of priority.
    *
    * \sa TransformRequestHandler, TransformHook
    */
@@ -656,9 +648,9 @@ struct Pipeline
    * \brief Handler called before sending data back to the client.
    *
    * \param[out] reponse
-   *            Where the status code are filled.
+   *            Where the status code is filled.
    * \param inBuffer
-   *            A chunk of the body of the request.
+   *            A chunk of the request body.
    * \param outBuffer
    *            An chunk of output body.
    *
@@ -671,9 +663,8 @@ struct Pipeline
   /**
    * \brief Generate Pipeline::PreSendRequestHandler.
    *
-   * \return An empty Pipeline::PreSendRequestHandler when the
-   *         hook has nothing to do for the request, otherwise a valid
-   *         handler.
+   * \return An empty Pipeline::PreSendRequestHandler if the
+   *         hook can not process the request, a valid handler otherwise.
    *
    * \sa preSendHooks, PreSendRequestHandler
    */
@@ -682,12 +673,12 @@ struct Pipeline
   /**
    * \brief A list of pre-send hooks.
    *
-   * This hooks can be chained, but the highest priority will be
-   * called first.
+   * These hooks can be chained, but only the first one, in order of
+   * descending priority, will be called.
    *
    * \sa PreSendRequestHandler, PreSendHook
    */
-std::list<std::pair<PreSendHook, float> > preSendHooks;
+  std::list<std::pair<PreSendHook, float> > preSendHooks;
 
   /** @} */
 
