@@ -11,6 +11,7 @@
 #define BREF_API_PIPELINE_H
 
 #include "Function.hpp"
+#include "IConfHelper.h"
 #include "BrefValue.h"
 #include "ILogger.h"
 #include "HttpRequest.h"
@@ -130,6 +131,7 @@ typedef BrefValue ServerConfig;
 struct Environment
 {
   const ServerConfig &  serverConfig; /**< the server configuration */
+  const IConfHelper &   serverConfigHelper; /**< the helper on server configuration */
   ILogger              *logger;       /**< the logger for a given context */
 
   /**

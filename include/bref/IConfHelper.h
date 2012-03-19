@@ -37,7 +37,7 @@ public:
    * \return Return value if exists, a BrefValue with a "nullType"
    *         otherwise.
    */
-  virtual const BrefValue & findValue(std::string const & key) = 0;
+  virtual const BrefValue & findValue(std::string const & key) const = 0;
 
   /**
    * \brief Return an acceptable value for "key" param, using request.
@@ -49,7 +49,7 @@ public:
    *         otherwise.
    */
   virtual const BrefValue & findValue(std::string const & key,
-                                      HttpRequest const & request) = 0;
+                                      HttpRequest const & request) const = 0;
 };
 
 } // ! bref
