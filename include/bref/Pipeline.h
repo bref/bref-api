@@ -444,7 +444,8 @@ struct Pipeline
    * \sa postParsingHooks, PostParsingRequestHandler
    */
   typedef Function<PostParsingRequestHandler (const Environment & environment,
-                                              HttpRequest &       httpRequest)> PostParsingHook;
+                                              HttpRequest &       httpRequest,
+                                              HttpResponse &      response)> PostParsingHook;
 
   /**
    * \brief List of post-parsing hooks.
@@ -545,7 +546,8 @@ struct Pipeline
    */
   typedef Function<IContentRequestHandler *(const Environment & environment,
                                             const HttpRequest & request,
-                                            FdType & fd)> ContentHook;
+                                            HttpResponse &      response,
+                                            FdType &            fd)> ContentHook;
 
 
   /**
@@ -600,7 +602,8 @@ struct Pipeline
    * \sa postContentHooks, PostContentRequestHandler
    */
   typedef Function<PostContentRequestHandler (const Environment & environment,
-                                              const HttpRequest & request)> PostContentHook;
+                                              const HttpRequest & request,
+                                              HttpResponse &      response)> PostContentHook;
 
   /**
    * \brief A list of post-content hooks.
@@ -641,7 +644,8 @@ struct Pipeline
    * \sa transformHooks, TransformRequestHandler
    */
   typedef Function<TransformRequestHandler (const Environment & environment,
-                                            const HttpRequest & request)> TransformHook;
+                                            const HttpRequest & request,
+                                            HttpResponse &      response)> TransformHook;
 
   /**
    * \brief List of transformation hooks.
@@ -665,8 +669,8 @@ struct Pipeline
    * \sa preSendHooks, PreSendHook
    */
   typedef Function<void (HttpResponse & response,
-                         const Buffer &,
-                         Buffer &)> PreSendRequestHandler;
+                         const Buffer & inBuffer,
+                         Buffer &       outBuffer)> PreSendRequestHandler;
 
   /**
    * \brief Generate Pipeline::PreSendRequestHandler.
@@ -676,7 +680,9 @@ struct Pipeline
    *
    * \sa preSendHooks, PreSendRequestHandler
    */
-  typedef Function<PreSendRequestHandler (const Environment &, const HttpRequest &)> PreSendHook;
+  typedef Function<PreSendRequestHandler (const Environment & environment,
+                                          const HttpRequest & request,
+                                          HttpResponse &      response)> PreSendHook;
 
   /**
    * \brief A list of pre-send hooks.
