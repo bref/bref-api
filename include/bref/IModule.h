@@ -23,24 +23,38 @@ namespace bref
  * \brief Class used to operate with dynamically loaded modules.
  *
  * Each module must provide a function to allow its loading at
- * runtime, matching the following prototype :
+ * runtime, matching the following prototype:
  *
  * \code extern "C" bref::IModule *loadModule(bref::ILogger *); \endcode
  *
- * once the module is loaded, a version check should be
- * performed as follows : If the major number of the API doesn't match with the major 
- * number of the minimum Api version supported by the module.
- * The module is not used. If the major numbers match, but the minor
- * numbers do not, the module is used but a warning is emitted.
+ * Once the module is loaded, a version check should be performed as
+ * follows:
+ *
+ * - If the major number of the API doesn't match with the major
+ *   number of the minimum Api version supported by the module. The
+ *   module is not used and a warning is emitted.
+ *
+ * - If the major numbers match, but the minor numbers do not, the
+ *   module is used but a warning is emitted.
+ *
  */
 class IModule
 {
-public:
+protected:
     /**
      * \brief Virtual destructor for the module.
+     *
+     * The \c delete() operator should not be called on IModule
+     * instance. Please refer to the \c dispose() method.
+     *
+     * \note The destructor is protected in order to disable call to
+     *       the \c delete() operator in the server code.
+     *
+     * \sa dispose()
      */
     virtual ~IModule() { }
 
+public:
     /**
      * \brief Retrieve the module's name.
      *
@@ -70,7 +84,18 @@ public:
     virtual const Version & minimumApiVersion() const = 0;
 
     /**
-     * \brief Register the module hooks on the convenient hookpoints of the pipeline.
+     * \brief Register the module hooks on the convenient hookpoints
+     *        of the pipeline.
+     *
+\code
+void registerHooks(Pipeline & pipeline)
+{
+  const float lowPriority = 0.5f;
+
+  pipeline.connectionHooks.push_back(std::make_pair(&hook_function,
+                                                    lowPriority));
+}
+\endcode
      *
      * \param[out] pipeline The pipeline.
      */
