@@ -77,6 +77,7 @@ namespace {
 bref::Pipeline::IContentRequestHandler *
 modHelloGenerator(const bref::Environment & /* environment */,
                   const bref::HttpRequest & /* request */,
+                  bref::HttpResponse & /* response */,
                   bref::FdType & /* fd */)
 {
   return new ModHelloRequestHandler();
