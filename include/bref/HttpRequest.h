@@ -26,7 +26,7 @@ namespace bref {
  *
  * \sa HttpResponse
  */
-class HttpRequest : public HttpHeader
+class BREF_DLL HttpRequest : public HttpHeader
 {
 private:
   /**

@@ -14,6 +14,7 @@
 #include "HttpHeader.h"
 #include "Version.h"
 #include "Buffer.h"
+#include "detail/BrefDLL.h"
 
 #include <deque>
 
@@ -25,7 +26,7 @@ namespace bref {
  * Contains a HTTP request using HttpHeader
  * \sa HttpRequest
  */
-class HttpResponse : public HttpHeader
+class BREF_DLL HttpResponse : public HttpHeader
 {
 private:
   /**

@@ -15,6 +15,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include "detail/BrefDLL.h"
 
 namespace bref {
 
@@ -55,7 +56,7 @@ if (empty.isInt()) {
 std::cout << v.asString() << std::endl;
 \endcode
  */
-class BrefValue
+class BREF_DLL BrefValue
 {
   /**
    * \brief Config types
