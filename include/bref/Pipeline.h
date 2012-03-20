@@ -528,11 +528,11 @@ struct Pipeline
     /**
      * \brief Virtual destructor
      *
-     * The \c delete() operator should not be called on IModule
+     * The \c delete() operator should not be called on the IContentRequestHandler
      * instance. Please refer to the \c dispose() method.
      *
-     * \note The destructor is protected in order to disable call to
-     *       the \c delete() operator in the server code.
+     * \note The destructor is protected in order to disable the call to
+     *       the \c delete() operator from the server code.
      *
      * \sa dispose()
      */
