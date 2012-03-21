@@ -25,7 +25,11 @@ namespace bref
  * Each module must provide a function to allow its loading at
  * runtime, matching the following prototype:
  *
- * \code extern "C" bref::IModule *loadModule(bref::ILogger *); \endcode
+ * \code
+extern "C" bref::IModule *loadModule(bref::ILogger *,
+                                     const bref::ServerConfig &,
+                                     const bref::IConfHelper &);
+\endcode
  *
  * Once the module is loaded, a version check should be performed as
  * follows:

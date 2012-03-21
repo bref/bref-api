@@ -18,7 +18,9 @@ const std::string ModHello::Description    = "Retourne un body avec \"Hello worl
 const float       ModHello::ModulePriority = 0.f; // Low priority
 
 extern "C" BREF_DLL
-bref::IModule *loadModule(bref::ILogger *logger)
+bref::IModule *loadModule(bref::ILogger *logger,
+                          const bref::ServerConfig &,
+                          const bref::IConfHelper &)
 {
   LOG_INFO(logger) << "Load module \"" << ModHello::Name << "\"";
   return new ModHello();
