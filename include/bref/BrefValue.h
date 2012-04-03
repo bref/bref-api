@@ -99,6 +99,12 @@ public:
   BrefValue(double);
 
   /**
+   * \brief Gets the type of the value
+   */
+
+  confType getType() const;
+
+  /**
    * \brief Clear Node content
    */
   void clear();
