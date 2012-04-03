@@ -142,7 +142,17 @@ struct Environment
     IpAddress  Ip;
     short      Port;
     SocketType Socket;
-  };
+  }                     client; /**< The client description */
+
+  Environment(const ServerConfig &  theServerConfig,
+              const IConfHelper &   theServerConfigHelper,
+              ILogger              *theLogger,
+              Client                theClient)
+    : serverConfig(theServerConfig)
+    , serverConfigHelper(theServerConfigHelper)
+    , logger(theLogger)
+    , client(theClient)
+  { }
 };
 
 /**
