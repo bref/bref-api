@@ -34,7 +34,7 @@ namespace bref {
  *        bref API.
  *
  * When a module is initialized by the method
- * \c IModule#registerHooks(Pipeline &) it initializes its hook points
+ * \c AModule#registerHooks(Pipeline &) it initializes its hook points
  * in the Pipeline.
  *
  * This page describes how the Pipeline class works and how it interacts
@@ -156,7 +156,7 @@ struct Environment
 };
 
 /**
- * \brief Where the IModule classes register their hooks.
+ * \brief Where the AModule classes register their hooks.
  *
  * See the \ref Pipeline "Pipeline" page for more information.
  */
