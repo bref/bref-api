@@ -28,10 +28,10 @@
 // == Code ==
 
 //
-// Chaque module doit hériter de l'interface
-// [IModule](http://bref.github.com/doxygen/classbref_1_1_i_module.html).
+// Chaque module doit hériter de l'abstraction
+// [AModule](http://bref.github.com/doxygen/classbref_1_1_a_module.html).
 //
-#include "bref/IModule.h"
+#include "bref/AModule.h"
 
 //
 // Utile pour le l'utilisation de d'`ostream` pour le logging.
@@ -46,20 +46,16 @@ bref::Pipeline::PostParsingRequestHandler
 rewriteURLHook(const bref::Environment &, bref::HttpRequest &, bref::HttpResponse &);
 
 //
-// Nous déclarons ici une classe héritant de l'interface IModule,
+// Nous déclarons ici une classe héritant de l'abstraction AModule,
 // cette classe sera instanciée un peu plus bas dans la fonction
 // [loadModule()](ModRewrite.cpp#enregistrement-du-module).
 //
-class ModRewrite : public bref::IModule
+class ModRewrite : public bref::AModule
 {
   //
   // Déclaration des variables internes au module
   //
 private:
-  const std::string   name_;
-  const std::string   description_;
-  const bref::Version version_;
-  const bref::Version apiVersion_;
   const float         priority_;
 
 public:
@@ -67,14 +63,6 @@ public:
   // Définition des variables.
   //
   ModRewrite()
-    : name_("mod_rewrite")
-    , description_("A simple URL-rewrite module")
-    , version_(0, 1)
-      //
-      // Vous pouvez retrouver la dernière version de l'API
-      // [ici](https://github.com/bref/bref-api/tags).
-      //
-    , apiVersion_(0, 2)
       //
       // Si on regarde dans le doxygen [la partie sur la
       // priorité](http://bref.github.com/doxygen/group___pipeline.html)
@@ -82,26 +70,24 @@ public:
       // semble pas avoir besoin d'être fait en priorité par rapport à
       // un autre module.
       //
-    , priority_(0.5)
+    : priority_(0.5)
+      //
+      // On définit ici les propriétés du module : nom, description, version et version de utilisée
+      // de l'API.
+      //
+      // Vous pouvez retrouver la dernière version de l'API
+      // [ici](https://github.com/bref/bref-api/tags).
+      //      
+    , AModule("mod_rewrite", "A simple URL-rewrite module", bref::Version(0, 2), bref::Version(0, 3))
+
   { }
-
-  //
-  // Définition des méthodes basiques donnant des informations sur le
-  // module.
-  //
-  virtual const std::string &   name()              const {return name_;}
-  virtual const std::string &   description()       const {return description_;}
-  virtual const bref::Version & version()           const {return version_;}
-  virtual const bref::Version & minimumApiVersion() const {return apiVersion_;}
-
-  //
 
   //
   // Cette méthode permet de libérer un module alloué dans une
   // librarie dynamique. Lorsque l'allocation (`new`) a été effectuée
   // dans une librarie dynamique, il est nécessaire que la libération
   // de la mémoire (`delete`) y soit aussi effectuée. Comme expliqué
-  // dans [le doxygen d'IModule](http://bref.github.com/doxygen/classbref_1_1_i_module.html)
+  // dans [le doxygen d'AModule](http://bref.github.com/doxygen/classbref_1_1_a_module.html)
   // cette méthode est souvent représentée par un body contenant
   // `delete this;`
   //
@@ -186,7 +172,7 @@ rewriteURLHook(const bref::Environment & /* environment */,
 // `IConfHelper`.
 //
 extern "C" BREF_DLL
-bref::IModule *loadModule(bref::ILogger *logger,
+bref::AModule *loadModule(bref::ILogger *logger,
                           const bref::ServerConfig &,
                           const bref::IConfHelper &)
 {

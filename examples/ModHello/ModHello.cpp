@@ -13,46 +13,23 @@
 
 #include <utility>
 
-const std::string ModHello::Name           = "mod_hello";
-const std::string ModHello::Description    = "Retourne un body avec \"Hello world\".";
 const float       ModHello::ModulePriority = 0.f; // Low priority
 
 extern "C" BREF_DLL
-bref::IModule *loadModule(bref::ILogger *logger,
+bref::AModule *loadModule(bref::ILogger *logger,
                           const bref::ServerConfig &,
                           const bref::IConfHelper &)
 {
-  LOG_INFO(logger) << "Load module \"" << ModHello::Name << "\"";
+  LOG_INFO(logger) << "Load module mod_hello";
   return new ModHello();
 }
 
 ModHello::ModHello()
-  : version_(0, 1),
-    apiVersion_(0, 1)
+  : AModule("mod_hello", "Retourne un body avec \"Hello world\".", bref::Version(0, 1), bref::Version(0, 3))
 { }
 
 ModHello::~ModHello()
 { }
-
-const std::string & ModHello::name() const
-{
-  return ModHello::Name;
-}
-
-const std::string & ModHello::description() const
-{
-  return ModHello::Description;
-}
-
-const bref::Version & ModHello::version() const
-{
-  return version_;
-}
-
-const bref::Version & ModHello::minimumApiVersion() const
-{
-  return apiVersion_;
-}
 
 /*
   La mémoire allouée dans une librairies dynamique par la méthode

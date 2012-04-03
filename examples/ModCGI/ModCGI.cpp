@@ -15,7 +15,7 @@
 #include     <errno.h>
 #include     <stdio.h>
 
-#include     "bref/IModule.h"
+#include     "bref/AModule.h"
 #include     "bref/ScopedLogger.h"
 #include     "bref/IConfHelper.h"
 
@@ -38,33 +38,21 @@ ModCGIGenerator(const bref::Environment &  env,
 // serveur.
 //
 // Pour un module plus simple, générant du contenu statique, nous vous conseillons de
-// regarderle [ModHello](https://github.com/bref/bref-api/tree/master/examples/ModHello)
+// regarder le [ModHello](https://github.com/bref/bref-api/tree/master/examples/ModHello)
 // disponible sur le dépôt Github de l'API Bref.
 
-class ModCGI : public bref::IModule
+class ModCGI : public bref::AModule
 {
 private:
-  const std::string         name_;
-  const std::string         description_;
-  const bref::Version       version_;
-  const bref::Version       apiVersion_;
   const float               priority_;
 
 public:
   ModCGI()
-    : name_("mod_cgi")
-    , description_("A CGI module able to execute Ruby")
-    , version_(0, 1)
-    , apiVersion_(0, 2)
     // Priorité haute : on génère du contenu dynamique avant d'autres potentiels
     // modules qui retourneraient le script comme du contenu statique.
-    , priority_(1.f)
+    : priority_(1.f)
+    , AModule("mod_cgi", "A CGI module able to execute Ruby", bref::Version(0, 2), bref::Version(0, 3))
   { }
-
-  virtual const std::string &   name()              const {return name_;}
-  virtual const std::string &   description()       const {return description_;}
-  virtual const bref::Version & version()           const {return version_;}
-  virtual const bref::Version & minimumApiVersion() const {return apiVersion_;}
 
   virtual void dispose()
   {
@@ -225,7 +213,7 @@ ModCGIGenerator(const bref::Environment &  env,
 
 // Pour plus d'informations, regarde le module [ModRewrite](documentation-example-ModRewrite.html#enregistrement-du-module).
 extern "C" BREF_DLL
-bref::IModule *loadModule(bref::ILogger *logger,
+bref::AModule *loadModule(bref::ILogger *logger,
                           const bref::ServerConfig &,
                           const bref::IConfHelper &)
 {

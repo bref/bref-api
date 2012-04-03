@@ -10,26 +10,16 @@
 #ifndef BREF_API_EXAMPLES_MODHELLO_MODHELLO_H_
 #define BREF_API_EXAMPLES_MODHELLO_MODHELLO_H_
 
-#include "bref/IModule.h"
+#include "bref/AModule.h"
 
-class ModHello : public bref::IModule
+class ModHello : public bref::AModule
 {
-public:
-  static const std::string Name;
-  static const std::string Description;
-  static const float       ModulePriority;
-
 private:
-  bref::Version version_;
-  bref::Version apiVersion_;
+  static const float       ModulePriority;
 
 public:
   ModHello();
   virtual ~ModHello();
-  virtual const std::string & name() const;
-  virtual const std::string & description() const;
-  virtual const bref::Version & version() const;
-  virtual const bref::Version & minimumApiVersion() const;
   virtual void dispose();
   virtual void registerHooks(bref::Pipeline & pipeline);
 };
