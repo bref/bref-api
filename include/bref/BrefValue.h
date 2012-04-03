@@ -204,6 +204,11 @@ public:
    */
   void setInt(int);
 
+  /**
+   * \brief Set a double as content
+   */
+   void setDouble(double);
+
 private:
   /**
    * \brief Contains type of Node
