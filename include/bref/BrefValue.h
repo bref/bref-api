@@ -67,6 +67,7 @@ class BREF_DLL BrefValue
       stringType,               /**< The value is a std::string */
       boolType,                 /**< The value is a boolean */
       intType,                  /**< The value is an integer */
+      doubleType,               /**< The value is a double */
       listType,                 /**< The value is a ::BrefValueList */
       arrayType                 /**< The value is a ::BrefValueArray */
     };
@@ -76,11 +77,6 @@ public:
    * \brief Default constructor, build a Null BrefValue.
    */
   BrefValue();
-
-  /**
-   * \brief Build a BrefValue with a double.
-   */
-  BrefValue(double);
 
   /**
    * \brief Build a BrefValue with a bool.
@@ -96,6 +92,11 @@ public:
    * \brief Build a BrefValue with an integer.
    */
   BrefValue(int);
+
+  /**
+   * \brief Build a BrefValue with a double.
+   */
+  BrefValue(double);
 
   /**
    * \brief Clear Node content
@@ -123,6 +124,11 @@ public:
   bool isInt() const;
 
   /**
+   * \brief test if valuer is a double
+   */
+  bool isDouble() const;
+
+  /**
    * \brief Test if value is a list
    */
   bool isList() const;
@@ -146,6 +152,11 @@ public:
    * \brief If it's an integer, get the value
    */
   int asInt() const;
+
+  /**
+   * \brief If it's a double, get the value
+   */
+  double asDouble() const;
 
   /**
    * \brief If it's a list, get the value
@@ -208,6 +219,11 @@ private:
    * \brief Contains node boolean
    */
   bool boolValue_;
+
+  /**
+   * \brief Contains node double
+   */
+  double doubleValue_;
 
   /**
    * \brief Contains node integer
