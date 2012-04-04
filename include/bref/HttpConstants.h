@@ -45,7 +45,7 @@ namespace status_codes {
  */
 enum Type {
   // 0 : Default value
-  Undefined	               = 0,
+  Undefined                    = 0,
 
   // 1xx: Informational
   Continue                     = 100,
