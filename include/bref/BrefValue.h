@@ -58,6 +58,7 @@ std::cout << v.asString() << std::endl;
  */
 class BREF_DLL BrefValue
 {
+  public:
   /**
    * \brief Config types
    */
@@ -72,7 +73,6 @@ class BREF_DLL BrefValue
       arrayType                 /**< The value is a ::BrefValueArray */
     };
 
-public:
   /**
    * \brief Default constructor, build a Null BrefValue.
    */
