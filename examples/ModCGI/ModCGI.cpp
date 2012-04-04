@@ -48,10 +48,10 @@ private:
 
 public:
   ModCGI()
+    : AModule("mod_cgi", "A CGI module able to execute Ruby", bref::Version(0, 2), bref::Version(0, 3))
     // Priorité haute : on génère du contenu dynamique avant d'autres potentiels
     // modules qui retourneraient le script comme du contenu statique.
-    : priority_(1.f)
-    , AModule("mod_cgi", "A CGI module able to execute Ruby", bref::Version(0, 2), bref::Version(0, 3))
+    , priority_(1.f)
   { }
 
   virtual void dispose()

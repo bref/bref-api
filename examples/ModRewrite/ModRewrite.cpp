@@ -64,22 +64,21 @@ public:
   //
   ModRewrite()
       //
-      // Si on regarde dans le doxygen [la partie sur la
-      // priorité](http://bref.github.com/doxygen/group___pipeline.html)
-      // on mets ici une priorité normale. La ré-écriture d'URL ne
-      // semble pas avoir besoin d'être fait en priorité par rapport à
-      // un autre module.
-      //
-    : priority_(0.5)
-      //
       // On définit ici les propriétés du module : nom, description, version et version de utilisée
       // de l'API.
       //
       // Vous pouvez retrouver la dernière version de l'API
       // [ici](https://github.com/bref/bref-api/tags).
       //      
-    , AModule("mod_rewrite", "A simple URL-rewrite module", bref::Version(0, 2), bref::Version(0, 3))
-
+    : AModule("mod_rewrite", "A simple URL-rewrite module", bref::Version(0, 2), bref::Version(0, 3))
+      //
+      // Si on regarde dans le doxygen [la partie sur la
+      // priorité](http://bref.github.com/doxygen/group___pipeline.html)
+      // on mets ici une priorité normale. La ré-écriture d'URL ne
+      // semble pas avoir besoin d'être fait en priorité par rapport à
+      // un autre module.
+      //
+    , priority_(0.5)
   { }
 
   //
