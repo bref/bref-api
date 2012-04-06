@@ -12,15 +12,15 @@
 
 #pragma once
 
+#include "detail/BrefDLL.h"
 #include <list>
 #include <map>
 #include <string>
-#include "detail/BrefDLL.h"
 
 namespace bref {
 
 // Forward declaration of the BrefValue class
-class BrefValue;
+class BREF_DLL BrefValue;
 
 /**
  * \brief Describe a list of BrefValue.
@@ -56,6 +56,7 @@ if (empty.isInt()) {
 std::cout << v.asString() << std::endl;
 \endcode
  */
+
 class BREF_DLL BrefValue
 {
   public:

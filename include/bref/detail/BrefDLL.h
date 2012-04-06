@@ -13,6 +13,7 @@
   #else
     #define BREF_DLL __declspec(dllexport)
   #endif
+  #pragma warning(disable: 4251)
 #else
   #if __GNUC__ >= 4
     #define BREF_DLL __attribute__ ((visibility ("default")))

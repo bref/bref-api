@@ -42,7 +42,7 @@ extern "C" bref::AModule *loadModule(bref::ILogger *,
  *   module is used but a warning is emitted.
  *
  */
-class AModule
+class BREF_DLL AModule
 {
 protected:
     /**
