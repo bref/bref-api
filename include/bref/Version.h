@@ -19,17 +19,17 @@ namespace bref {
 struct Version
 {
   Version()
-    : major(0),
-      minor(0)
+    : Major(0),
+      Minor(0)
   { }
 
   Version(int theMajor, int theMinor)
-    : major(theMajor),
-      minor(theMinor)
+    : Major(theMajor),
+      Minor(theMinor)
   { }
 
-  int major;
-  int minor;
+  int Major;
+  int Minor;
 };
 
 } // ! bref

@@ -44,6 +44,9 @@ namespace status_codes {
  * \brief Enumeration containing the various HTTP status codes.
  */
 enum Type {
+  // 0 : Default value
+  Undefined                    = 0,
+
   // 1xx: Informational
   Continue                     = 100,
   SwitchingProtocols           = 101,
