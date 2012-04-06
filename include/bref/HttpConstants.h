@@ -23,7 +23,8 @@ namespace request_methods {
    * \brief Enumeration containing the various HTTP methods.
    */
   enum Type {
-    Options = 0,
+    UndefinedRequestMethod = 0,
+    Options,
     Get,
     Head,
     Post,
@@ -45,7 +46,7 @@ namespace status_codes {
  */
 enum Type {
   // 0 : Default value
-  Undefined                    = 0,
+  UndefinedStatusCode          = 0,
 
   // 1xx: Informational
   Continue                     = 100,
@@ -102,11 +103,12 @@ enum Type {
  * \brief Enumeration containing the various HTTP status code categories.
  */
 enum Category {
-  Informational = 100,
-  Success       = 200,
-  Redirection   = 300,
-  ClientError   = 400,
-  ServerError   = 500
+  UndefinedCategory     = 0,
+  Informational         = 100,
+  Success               = 200,
+  Redirection           = 300,
+  ClientError           = 400,
+  ServerError           = 500
 };
 
 } // ! status_codes
