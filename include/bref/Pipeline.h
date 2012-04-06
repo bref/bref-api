@@ -320,28 +320,6 @@ struct Pipeline
    */
   std::list<std::pair<OnSendHook, float> > onSendHooks;
 
-  /**
-   * \brief Called after a client disconnection.
-   *
-   * \param[in] environment
-   *            The environment of the request.
-   *
-   * \sa disconnectionHooks
-   */
-  typedef Function<void (const Environment & environment)> DisconnectionHook;
-
-  /**
-   * \brief List of disconnection hooks.
-   *
-   * Connection hooks should be called by the ZIA server after
-   * the client disconnection
-   *
-   * This hook point can be used for clean usage for example.
-   *
-   * \sa DisconnectionHook
-   */
-  std::list<std::pair<ConnectionHook, float> > disconnectionHooks;
-
   /** @} */
 
   /**

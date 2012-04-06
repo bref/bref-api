@@ -3,7 +3,6 @@ BrefAPI Changelog
 
 Head
 ----
-*  Add new hook for clean usage : DisconnectionHook
 *  Fix windows warning C4251
 *  Fix compilation under *nix systems, where minor() and
    major() are already defined in <sys/types.h> (issue
