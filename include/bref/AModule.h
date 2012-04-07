@@ -16,6 +16,7 @@
 
 #include "Version.h"
 #include "Pipeline.h"
+#include "IDisposable.h"
 
 namespace bref
 {
@@ -42,7 +43,7 @@ extern "C" bref::AModule *loadModule(bref::ILogger *,
  *   module is used but a warning is emitted.
  *
  */
-class BREF_DLL AModule
+class BREF_DLL AModule : public IDisposable
 {
 protected:
     /**
@@ -129,7 +130,7 @@ public:
      * \brief Register the module hooks on the convenient hookpoints
      *        of the pipeline.
      *
-     *        Example:
+     * Example:
      *
 \code
 void registerHooks(Pipeline & pipeline)
@@ -143,15 +144,53 @@ void registerHooks(Pipeline & pipeline)
      *
      * \param[out] pipeline The pipeline.
      */
-    virtual void registerHooks(Pipeline & pipeline) = 0;
+    virtual void registerHooks(Pipeline & /* pipeline */) { }
 
     /**
-     * \brief Dispose of the resources allocated by the module.
+     * \brief Register the module hooks on the convenient hookpoints
+     *        of the pipeline.
      *
-     * \note This is often represented by a simple:
-     *       \code delete this; \endcode
+     * This method should be called by the server each time a new
+     * connection is made. The server should call
+     * IDisposable::dispose() on the returned value (if not null) when
+     * the connection is closed.
+     *
+     * Example:
+\code
+using namespace bref;
+
+class ModuleSession : public IDisposable
+{
+public:
+  Pipeline::OnReceiveRequestHandler receive(const Environment &)
+  {
+    return Pipeline::OnReceiveRequestHandler();
+  }
+
+  virtual void dispose() { delete this; }
+  virtual ~ModuleSession() { }
+};
+
+class Module
+{
+  virtual IDisposable *registerSessionHooks(Pipeline & pipeline)
+  {
+    ModuleSession           *ms = new ModuleSession();
+    Pipeline::OnReceiveHook  hook(ms, &ModuleSession::receive);
+
+    pipeline.onReceiveHooks.push_back(std::make_pair(hook, 0.5f));
+    return ms;
+  }
+
+  virtual void dispose() { delete this; }
+};
+\endcode
+     *
+     * \param[out] pipeline The pipeline.
+     *
+     * \return A disposable instance, or null instead.
      */
-    virtual void dispose() = 0;
+    virtual IDisposable *registerSessionHooks(Pipeline & /* pipeline */) { return 0; }
 };
 
 } // ! bref

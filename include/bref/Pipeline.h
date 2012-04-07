@@ -18,6 +18,7 @@
 #include "HttpResponse.h"
 #include "IpAddress.h"
 #include "Buffer.h"
+#include "IDisposable.h"
 
 #include <list>
 #include <vector>
@@ -489,7 +490,7 @@ struct Pipeline
    * and generates a response body.
    *
    */
-  class IContentRequestHandler
+  class IContentRequestHandler : public IDisposable
   {
   public:
     /**
@@ -525,14 +526,6 @@ struct Pipeline
      * \sa contentHooks, ContentHook
      */
     virtual bool outContent(HttpResponse & response, Buffer & outBuffer) = 0;
-
-    /**
-     * \brief Dispose of the resources allocated by the request handler.
-     *
-     * \note This is often represented by a simple:
-     *       \code delete this; \endcode
-     */
-    virtual void dispose() = 0;
 
   protected:
     /**
