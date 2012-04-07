@@ -7,7 +7,9 @@ Head
 
 v0.4
 ----
-*  Add an IDisposable interface and a registerSessionHooks() method in AModule
+*  **Add an IDisposable interface and a registerSessionHooks() method in
+   AModule**.
+*  Add BrefVaue(const BrefValue{List,Array} &) constructors.
 *  Fix windows warning C4251
 *  Fix compilation under *nix systems, where minor() and
    major() are already defined in <sys/types.h> (issue

@@ -10,6 +10,8 @@
 #ifndef BREF_API_IDISPOSABLE_H_
 #define BREF_API_IDISPOSABLE_H_
 
+#include "detail/BrefDLL.h"
+
 namespace bref {
 
 /**
@@ -18,7 +20,7 @@ namespace bref {
  *
  * \sa dispose()
  */
-class IDisposable
+class BREF_DLL IDisposable
 {
 public:
   /**
