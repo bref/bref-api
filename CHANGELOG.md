@@ -3,6 +3,11 @@ BrefAPI Changelog
 
 Head
 ----
+*  [See diff](https://github.com/bref/bref-api/compare/v0.4...master)
+
+v0.4
+----
+*  Add an IDisposable interface and a registerSessionHooks() method in AModule
 *  Fix windows warning C4251
 *  Fix compilation under *nix systems, where minor() and
    major() are already defined in <sys/types.h> (issue
@@ -11,7 +16,7 @@ Head
    values. It will be the default defined value in response header. Could be
    usefull to detect if another ContentHook.
    has already supported the content generation.
-*  [See diff](https://github.com/bref/bref-api/compare/v0.3...master)
+*  [See diff](https://github.com/bref/bref-api/compare/v0.3...v0.4)
 
 v0.3
 ----
