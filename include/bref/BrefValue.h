@@ -100,6 +100,16 @@ class BREF_DLL BrefValue
   BrefValue(double);
 
   /**
+   * \brief Build a BrefValue with a BrefValueArray
+   */
+  BrefValue(const BrefValueArray &);
+
+  /**
+   * \brief Build a BrefValue with a BrefValueList
+   */
+  BrefValue(const BrefValueList &);
+
+  /**
    * \brief Gets the type of the value
    */
 
