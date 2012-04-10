@@ -65,16 +65,15 @@ public:
   /**
    * \brief Log a message with a given severity.
    *
-   * \note
-   * The message is logged only if \p severity (the message severity) 
-   * is superior or equal to severity() (the logger severity).
+   * \note The message is logged only if \p messageSeverity is
+   *       superior or equal to \c severity() (the logger severity).
    *
-   * \param severity
+   * \param messageSeverity
    *    The severity of the message.
    * \param message
    *    The message (string) to log.
    */
-  virtual void log(Severity severity, const std::string & message) = 0;
+  virtual void log(Severity messageSeverity, const std::string & message) = 0;
 };
 
 } // ! bref
