@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# include <WinSock2.h>
+# include <windows.h>
 #endif
 
 namespace bref {

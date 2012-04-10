@@ -10,6 +10,9 @@
 #ifndef BREF_API_PIPELINE_H
 #define BREF_API_PIPELINE_H
 
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+# include <windows.h>
+#endif
 #include "Function.hpp"
 #include "IConfHelper.h"
 #include "BrefValue.h"
@@ -23,9 +26,6 @@
 #include <list>
 #include <vector>
 #include <utility>
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# include <windows.h>
-#endif
 
 namespace bref {
 /**
