@@ -417,7 +417,7 @@ struct Pipeline
    *
    * \sa parsingHooks, ParsingRequestHandler
    */
-  typedef Function<ParsingRequestHandler (Environment &)> ParsingHook;
+  typedef Function<ParsingRequestHandler (const Environment &)> ParsingHook;
 
   /**
    * \brief List of parsing hooks.
