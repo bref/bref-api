@@ -32,7 +32,7 @@ inline bool icaseCharCmp(char a, char b)
  */
 struct ICaseStringCmp : public std::binary_function<std::string, std::string, bool>
 {
-  bool operator()(const std::string & a, const std::string & b)
+  bool operator()(const std::string & a, const std::string & b) const
   {
     return std::lexicographical_compare(a.begin(), a.end(),
                                         b.begin(), b.end(),
